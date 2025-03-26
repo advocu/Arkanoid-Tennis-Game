@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tennis Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        canvas {
+            border: 1px solid black;
+            background-color: #008000; /* Green court */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game constants
+        const GRAVITY = 0.5;
+        const BALL_RADIUS = 10;
+        const PADDLE_WIDTH = 10;
+        const PADDLE_HEIGHT = 60;
+        const PADDLE_SPEED = 5;
+
+        // Game variables
+        let ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            vx: 5,
+            vy: 0,
+            radius: BALL_RADIUS
+        };
+
+        let player1 = {
+            x: 20,
+            y: canvas.height / 2 - PADDLE_HEIGHT / 2,
+            width: PADDLE_WIDTH,
+            height: PADDLE_HEIGHT,
+            vy: 0
+        };
+
+        let player2 = {
+            x: canvas.width - 20 - PADDLE_WIDTH,
+            y: canvas.height / 2 - PADDLE_HEIGHT / 2,
+            width: PADDLE_WIDTH,
+            height: PADDLE_HEIGHT,
+            vy: 0
+        };
+
+        // Handle keyboard input
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'w': player1.vy = -PADDLE_SPEED; break;
+                case 's': player1.vy = PADDLE_SPEED; break;
+                case 'ArrowUp': player2.vy = -PADDLE_SPEED; break;
+                case 'ArrowDown': player2.vy = PADDLE_SPEED; break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch (e.key) {
+                case 'w':
+                case 's': player1.vy = 0; break;
+                case 'ArrowUp':
+                case 'ArrowDown': player2.vy = 0; break;
+            }
+        });
+
+        // Game loop
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Update game state
+        function update() {
+            // Move players
+            player1.y += player1.vy;
+            player2.y += player2.vy;
+
+            // Clamp player positions
+            player1.y = Math.max(0, Math.min(canvas.height - player1.height, player1.y));
+            player2.y = Math.max(0, Math.min(canvas.height - player2.height, player2.y));
+
+            // Move ball
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            ball.vy += GRAVITY; // Apply gravity
+
+            // Ball collision with top and bottom
+            if (ball.y + ball.radius > canvas.height) {
+                ball.y = canvas.height - ball.radius;
+                ball.vy *= -0.8; // Bounce
+            } else if (ball.y - ball.radius < 0) {
+                ball.y = ball.radius;
+                ball.vy *= -0.8; // Bounce
+            }
+
+            // Ball collision with paddles
+            if (ball.x - ball.radius < player1.x + player1.width &&
+                ball.y > player1.y && ball.y < player1.y + player1.height) {
+                ball.vx = Math.abs(ball.vx);
+            } else if (ball.x + ball.radius > player2.x &&
+                ball.y > player2.y && ball.y < player2.y + player2.height) {
+                ball.vx = -Math.abs(ball.vx);
+            }
+
+            // Ball out of bounds
+            if (ball.x < 0 || ball.x > canvas.width) {
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height / 2;
+                ball.vx = 5;
+                ball.vy = 0;
+            }
+        }
+
+        // Draw game elements
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw net
+            ctx.fillStyle = 'white';
+            ctx.fillRect(canvas.width / 2 - 1, 0, 2, canvas.height);
+
+            // Draw ball
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'yellow';
+            ctx.fill();
+            ctx.closePath();
+
+            // Draw paddles
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(player1.x, player1.y, player1.width, player1.height);
+            ctx.fillStyle = 'red';
+            ctx.fillRect(player2.x, player2.y, player2.width, player2.height);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
